@@ -128,12 +128,12 @@ extensions = [
     'sphinx.ext.pngmath',
     'sphinx.ext.viewcode',
     'sphinx.ext.inheritance_diagram',
-    'astropy.sphinx.ext.numpydoc',
-    'astropy.sphinx.ext.astropyautosummary',
-    'astropy.sphinx.ext.automodsumm',
-    'astropy.sphinx.ext.automodapi',
-    'astropy.sphinx.ext.tocdepthfix',
-    'astropy.sphinx.ext.doctest'
+    'astropy_helpers.sphinx.ext.numpydoc',
+    'astropy_helpers.sphinx.ext.astropyautosummary',
+    'astropy_helpers.sphinx.ext.automodsumm',
+    'astropy_helpers.sphinx.ext.automodapi',
+    'astropy_helpers.sphinx.ext.tocdepthfix',
+    'astropy_helpers.sphinx.ext.doctest'
     ]
 
 try:

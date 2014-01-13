@@ -25,9 +25,10 @@ setup(
     license='BSD',
     url='http://astropy.org',
     long_description='',
+    packages=['astropy_helpers', 'astropy_helpers.sphinx', 'astropy_helpers.sphinx.ext', 'astropy_helpers.sphinx.ext.tests'],
+    package_data={'astropy_helpers.sphinx':['themes'], 'astropy_helpers.sphinx.ext':['templates']},
     download_url='{0}/astropy-{1}.tar.gz'.format(DOWNLOAD_BASE_URL, VERSION),
     classifiers=[],
     cmdclass={},
     zip_safe=False,
-    packages=[NAME]
 )

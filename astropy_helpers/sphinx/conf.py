@@ -14,7 +14,7 @@ from os import path
 from distutils.version import LooseVersion
 import re
 
-from ..utils.compat import subprocess
+import subprocess
 
 
 # -- General configuration ----------------------------------------------------

@@ -37,7 +37,7 @@ before_script:
     - git config --global user.email "author@example.com"
 
 script:
-    - py.test
+    - python -c 'import numpy; print(numpy.__version__)'
 
 after_success:
     - coveralls

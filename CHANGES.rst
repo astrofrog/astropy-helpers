@@ -22,6 +22,8 @@ astropy-helpers Changelog
   in a repository that uses astropy-helpers as a submodule:
   ``AttributeError: 'NoneType' object has no attribute 'mkdtemp'`` [#89]
 
+- Improved support for building the documentation using Python 3.x. [#96]
+
 
 0.4.2 (2014-08-09)
 ------------------

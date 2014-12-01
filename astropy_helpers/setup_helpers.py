@@ -1024,6 +1024,19 @@ def update_package_files(srcdir, extensions, package_data, packagenames,
     package_dirs.update(info['package_dir'])
 
 
+def preprocess_package(srcdir='.', exclude=()):
+    """
+    Runs a pre-processing on all sub-packages that define the
+    ``preprocess_source()`` function in the ``setup_package.py`` file.
+    """
+
+    packages = filter_packages(find_packages(srcdir, exclude=exclude))
+    
+    for setuppkg in iter_setup_packages(srcdir, packages):
+        if hasattr(setuppkg, 'preprocess_source'):
+            setuppkg.preprocess_source()
+
+
 def get_package_info(srcdir='.', exclude=()):
     """
     Collates all of the information for building all subpackages

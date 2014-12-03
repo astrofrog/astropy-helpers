@@ -644,7 +644,11 @@ class AstropyBuildPy(SetuptoolsBuildPy):
         SetuptoolsBuildPy.run_2to3(self, filtered_files, doctests)
 
     def run(self):
-        # first run the normal build_py
+
+        # run preprocessing
+        preprocess_package()
+
+        # then run the normal build_py
         SetuptoolsBuildPy.run(self)
 
 
@@ -1031,7 +1035,7 @@ def preprocess_package(srcdir='.', exclude=()):
     """
 
     packages = filter_packages(find_packages(srcdir, exclude=exclude))
-    
+
     for setuppkg in iter_setup_packages(srcdir, packages):
         if hasattr(setuppkg, 'preprocess_source'):
             setuppkg.preprocess_source()

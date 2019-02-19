@@ -119,7 +119,7 @@ TEST_PACKAGE_SETUP_PY = """\
 
 from setuptools import setup
 
-NAME = 'astropy-helpers-test'
+NAME = 'extension-helpers-test'
 VERSION = {version!r}
 
 setup(name=NAME, version=VERSION,

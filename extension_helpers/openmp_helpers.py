@@ -177,7 +177,7 @@ def check_openmp_support(openmp_flags=None):
     link_flags = openmp_flags.get('linker_flags')
 
     # Pass -coverage flag to linker.
-    # https://github.com/astropy/astropy-helpers/pull/374
+    # https://github.com/astropy/extension-helpers/pull/374
     if '-coverage' in compile_flags and '-coverage' not in link_flags:
         link_flags.append('-coverage')
 

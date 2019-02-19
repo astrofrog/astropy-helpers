@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-project = 'astropy-helpers'
+project = 'extension-helpers'
 copyright = '2014, The Astropy Developers'
 author = 'The Astropy Developers'
 

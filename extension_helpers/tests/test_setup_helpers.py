@@ -183,7 +183,7 @@ def test_compiler_module(capsys, c_extension_test_package):
 
 def test_no_cython_buildext(capsys, c_extension_test_package, monkeypatch):
     """
-    Regression test for https://github.com/astropy/astropy-helpers/pull/35
+    Regression test for https://github.com/astropy/extension-helpers/pull/35
 
     This tests the custom build_ext command installed by extension_helpers when
     used with a project that has no Cython extensions (but does have one or

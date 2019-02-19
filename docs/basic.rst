@@ -1,7 +1,7 @@
 Basic functionality
 ===================
 
-The big-picture purpose of astropy-helpers is to provide customization to Python's
+The big-picture purpose of extension-helpers is to provide customization to Python's
 packaging infrastructure process in ways that the Astropy Project has found to
 help simplifying the developing and releasing packages. This is primarily
 built around ``setup.py`` commands, as outlined below, as well as code to help
@@ -10,15 +10,15 @@ manage version numbers and better control the build process of larger packages.
 Custom setup.py commands
 ------------------------
 
-The main part of astropy-helpers is to provide customized setuptools commands.
-For example, in a package that uses astropy-helpers, the following command
+The main part of extension-helpers is to provide customized setuptools commands.
+For example, in a package that uses extension-helpers, the following command
 will be available::
 
     python setup.py build_docs
 
-and this command is implemented in astropy-helpers. To use the custom commands
+and this command is implemented in extension-helpers. To use the custom commands
 described here, you can either use the simplified method of opting in to
-astropy-helpers described in :ref:`setup_all`, or if you want more control, use
+extension-helpers described in :ref:`setup_all`, or if you want more control, use
 the :func:`~extension_helpers.setup_helpers.register_commands` function by
 adding::
 
@@ -120,7 +120,7 @@ compared to the default ``build_ext`` command:
 Version helpers
 ---------------
 
-Another piece of functionality we provide in astropy-helpers is the ability
+Another piece of functionality we provide in extension-helpers is the ability
 to generate a ``packagename.version`` module that includes functions that
 automatically set the version string for developer versions, to e.g.
 ``3.2.dev22213`` so that each developer version has a unique number (although
@@ -131,7 +131,7 @@ In addition, this module contains variables such as ``major``, ``minor``, and
 ``bugfix``, as well as ``version_info`` (a tuple of the previous three values),
 a ``release`` flag that indicates whether we are using a stable release, and
 several other complementary variables.  To use the version helpers, you can
-either use the simplified method of opting in to astropy-helpers described in
+either use the simplified method of opting in to extension-helpers described in
 :ref:`setup_all`, or if you want more control, use the
 :func:`~extension_helpers.version_helpers.generate_version_py`, import::
 
@@ -225,7 +225,7 @@ these files can include one or more of the following functions:
     the system library or the included one.
 
 With these files in place, you can either use the simplified method of opting in
-to astropy-helpers described in :ref:`setup_all`, or if you want more control,
+to extension-helpers described in :ref:`setup_all`, or if you want more control,
 use theyou can then make use of the
 :func:`~extension_helpers.setup_helpers.get_package_info`  function in your
 ``setup.py`` file with::
@@ -260,7 +260,7 @@ make sure the package name and version number are defined in ``setup.cfg``::
     version = 0.4.dev
 
 then use the :func:`~extension_helpers.setup_helpers.setup` function from
-astropy-helpers in your ``setup.py`` file as follows::
+extension-helpers in your ``setup.py`` file as follows::
 
     import ah_bootstrap
     from extension_helpers.setup_helpers import setup

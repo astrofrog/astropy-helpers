@@ -24,12 +24,12 @@ astropy-helpers Changelog
 
 - Simplified setup.py and moved most of the configuration to setup.cfg. [#445]
 
-- Add a new ``astropy_helpers.setup_helpers.setup`` function that does all
+- Add a new ``extension_helpers.setup_helpers.setup`` function that does all
   the default boilerplate in typical ``setup.py`` files that use
   astropy-helpers. [#443]
 
 - Remove ``deprecated``, ``deprecated_attribute``, and ``minversion`` from
-  ``astropy_helpers.utils``. [#447]
+  ``extension_helpers.utils``. [#447]
 
 - Updated minimum required version of setuptools to 30.3.0. [#440]
 
@@ -207,12 +207,12 @@ astropy-helpers Changelog
 - The 'automodapi' Sphinx extension (and associated dependencies) has now
   been moved to a standalone package which can be found at
   https://github.com/astropy/sphinx-automodapi - this is now bundled in
-  astropy-helpers under astropy_helpers.extern.automodapi for
+  astropy-helpers under extension_helpers.extern.automodapi for
   convenience. Version shipped with astropy-helpers is v0.6.
   [#278, #303, #309, #323]
 
 - The ``numpydoc`` Sphinx extension has now been moved to
-  ``astropy_helpers.extern``. [#278]
+  ``extension_helpers.extern``. [#278]
 
 - Fix ``build_docs`` error catching, so it doesn't hide Sphinx errors. [#292]
 
@@ -263,7 +263,7 @@ astropy-helpers Changelog
 - Add Python version dependent local sphinx inventories that contain
   otherwise missing references. [#216]
 
-- ``astropy_helpers`` now require Sphinx 1.3 or later. [#226]
+- ``extension_helpers`` now require Sphinx 1.3 or later. [#226]
 
 
 1.1.2 (2016-03-9)
@@ -283,7 +283,7 @@ astropy-helpers Changelog
 1.1 (2015-12-10)
 ----------------
 
-- The original ``AstropyTest`` class in ``astropy_helpers``, which implements
+- The original ``AstropyTest`` class in ``extension_helpers``, which implements
   the ``setup.py test`` command, is deprecated in favor of moving the
   implementation of that command closer to the actual Astropy test runner in
   ``astropy.tests``.  Now a dummy ``test`` command is provided solely for
@@ -292,17 +292,17 @@ astropy-helpers Changelog
   continues to work with older versions of Astropy). See the related issue for
   more details. [#184]
 
-- Added a useful new utility function to ``astropy_helpers.utils`` called
+- Added a useful new utility function to ``extension_helpers.utils`` called
   ``find_data_files``.  This is similar to the ``find_packages`` function in
   setuptools in that it can be used to search a package for data files
   (matching a pattern) that can be passed to the ``package_data`` argument for
-  ``setup()``.  See the docstring to ``astropy_helpers.utils.find_data_files``
+  ``setup()``.  See the docstring to ``extension_helpers.utils.find_data_files``
   for more details. [#42]
 
-- The ``astropy_helpers`` module now sets the global ``_ASTROPY_SETUP_``
+- The ``extension_helpers`` module now sets the global ``_ASTROPY_SETUP_``
   flag upon import (from within a ``setup.py``) script, so it's not necessary
   to have this in the ``setup.py`` script explicitly.  If in doubt though,
-  there's no harm in setting it twice.  Putting it in ``astropy_helpers``
+  there's no harm in setting it twice.  Putting it in ``extension_helpers``
   just ensures that any other imports that occur during build will have this
   flag set. [#191]
 
@@ -322,7 +322,7 @@ astropy-helpers Changelog
 1.0.7 (unreleased)
 ------------------
 
-- Fix missing import in ``astropy_helpers/utils.py``. [#196]
+- Fix missing import in ``extension_helpers/utils.py``. [#196]
 
 1.0.6 (2015-12-04)
 ------------------
@@ -378,7 +378,7 @@ astropy-helpers Changelog
   used for math rendering.  When built elsewhere, the "pngmath"
   extension is still used for math rendering. [#170]
 
-- Fix crash when importing astropy_helpers when running with ``python -OO``
+- Fix crash when importing extension_helpers when running with ``python -OO``
   [#171]
 
 - The ``build`` and ``build_ext`` stages now correctly recognize the presence
@@ -431,33 +431,33 @@ astropy-helpers Changelog
   the package's ``setup_package.py`` module.  See the PR for more details.
   [#112]
 
-- The following objects in the ``astropy_helpers.setup_helpers`` module have
+- The following objects in the ``extension_helpers.setup_helpers`` module have
   been relocated:
 
   - ``get_dummy_distribution``, ``get_distutils_*``, ``get_compiler_option``,
     ``add_command_option``, ``is_distutils_display_option`` ->
-    ``astropy_helpers.distutils_helpers``
+    ``extension_helpers.distutils_helpers``
 
   - ``should_build_with_cython``, ``generate_build_ext_command`` ->
-    ``astropy_helpers.commands.build_ext``
+    ``extension_helpers.commands.build_ext``
 
-  - ``AstropyBuildPy`` -> ``astropy_helpers.commands.build_py``
+  - ``AstropyBuildPy`` -> ``extension_helpers.commands.build_py``
 
-  - ``AstropyBuildSphinx`` -> ``astropy_helpers.commands.build_sphinx``
+  - ``AstropyBuildSphinx`` -> ``extension_helpers.commands.build_sphinx``
 
-  - ``AstropyInstall`` -> ``astropy_helpers.commands.install``
+  - ``AstropyInstall`` -> ``extension_helpers.commands.install``
 
-  - ``AstropyInstallLib`` -> ``astropy_helpers.commands.install_lib``
+  - ``AstropyInstallLib`` -> ``extension_helpers.commands.install_lib``
 
-  - ``AstropyRegister`` -> ``astropy_helpers.commands.register``
+  - ``AstropyRegister`` -> ``extension_helpers.commands.register``
 
-  - ``get_pkg_version_module`` -> ``astropy_helpers.version_helpers``
+  - ``get_pkg_version_module`` -> ``extension_helpers.version_helpers``
 
   - ``write_if_different``, ``import_file``, ``get_numpy_include_path`` ->
-    ``astropy_helpers.utils``
+    ``extension_helpers.utils``
 
   All of these are "soft" deprecations in the sense that they are still
-  importable from ``astropy_helpers.setup_helpers`` for now, and there is
+  importable from ``extension_helpers.setup_helpers`` for now, and there is
   no (easy) way to produce deprecation warnings when importing these objects
   from ``setup_helpers`` rather than directly from the modules they are
   defined in.  But please consider updating any imports to these objects.
@@ -584,18 +584,18 @@ astropy-helpers Changelog
   <https://github.com/astropy/astropy-APEs/blob/master/APE4.rst>`_ for
   details of the motivation and design of this package.
 
-- The ``astropy_helpers`` package replaces the following modules in the
+- The ``extension_helpers`` package replaces the following modules in the
   ``astropy`` package:
 
-  - ``astropy.setup_helpers`` -> ``astropy_helpers.setup_helpers``
+  - ``astropy.setup_helpers`` -> ``extension_helpers.setup_helpers``
 
-  - ``astropy.version_helpers`` -> ``astropy_helpers.version_helpers``
+  - ``astropy.version_helpers`` -> ``extension_helpers.version_helpers``
 
-  - ``astropy.sphinx`` - > ``astropy_helpers.sphinx``
+  - ``astropy.sphinx`` - > ``extension_helpers.sphinx``
 
   These modules should be considered deprecated in ``astropy``, and any new,
-  non-critical changes to those modules will be made in ``astropy_helpers``
+  non-critical changes to those modules will be made in ``extension_helpers``
   instead.  Affiliated packages wishing to make use those modules (as in the
-  Astropy package-template) should use the versions from ``astropy_helpers``
+  Astropy package-template) should use the versions from ``extension_helpers``
   instead, and include the ``ah_bootstrap.py`` script in their project, for
-  bootstrapping the ``astropy_helpers`` package in their setup.py script.
+  bootstrapping the ``extension_helpers`` package in their setup.py script.

@@ -9,6 +9,7 @@ from __future__ import absolute_import
 import collections
 import os
 import re
+import shutil
 import subprocess
 import sys
 import traceback
@@ -29,12 +30,8 @@ from setuptools import find_packages as _find_packages
 from .distutils_helpers import (add_command_option, get_compiler_option,
                                 get_dummy_distribution, get_distutils_build_option,
                                 get_distutils_build_or_install_option)
-from .version_helpers import get_pkg_version_module, generate_version_py
 from .utils import (walk_skip_hidden, import_file, extends_doc,
                     resolve_name, AstropyDeprecationWarning)
-
-from .commands.build_ext import AstropyHelpersBuildExt
-from .commands.test import AstropyTest
 
 # These imports are not used in this module, but are included for backwards
 # compat with older versions of this module
@@ -69,80 +66,6 @@ except SyntaxError:
     pass
 
 
-def setup(**kwargs):
-    """
-    A wrapper around setuptools' setup() function that automatically sets up
-    custom commands, generates a version file, and customizes the setup process
-    via the ``setup_package.py`` files.
-    """
-
-    # DEPRECATED: store the package name in a built-in variable so it's easy
-    # to get from other parts of the setup infrastructure. We should phase this
-    # out in packages that use it - the cookiecutter template should now be
-    # able to put the right package name where needed.
-    conf = read_configuration('setup.cfg')
-    builtins._ASTROPY_PACKAGE_NAME_ = conf['metadata']['name']
-
-    # Create a dictionary with setup command overrides. Note that this gets
-    # information about the package (name and version) from the setup.cfg file.
-    cmdclass = register_commands()
-
-    # Freeze build information in version.py. Note that this gets information
-    # about the package (name and version) from the setup.cfg file.
-    version = generate_version_py()
-
-    # Get configuration information from all of the various subpackages.
-    # See the docstring for setup_helpers.update_package_files for more
-    # details.
-    package_info = get_package_info()
-    package_info['cmdclass'] = cmdclass
-    package_info['version'] = version
-
-    # Override using any specified keyword arguments
-    package_info.update(kwargs)
-
-    setuptools_setup(**package_info)
-
-
-def adjust_compiler(package):
-    warnings.warn(
-        'The adjust_compiler function in setup.py is '
-        'deprecated and can be removed from your setup.py.',
-        AstropyDeprecationWarning)
-
-
-def get_debug_option(packagename):
-    """ Determines if the build is in debug mode.
-
-    Returns
-    -------
-    debug : bool
-        True if the current build was started with the debug option, False
-        otherwise.
-
-    """
-
-    try:
-        current_debug = get_pkg_version_module(packagename,
-                                               fromlist=['debug'])[0]
-    except (ImportError, AttributeError):
-        current_debug = None
-
-    # Only modify the debug flag if one of the build commands was explicitly
-    # run (i.e. not as a sub-command of something else)
-    dist = get_dummy_distribution()
-    if any(cmd in dist.commands for cmd in ['build', 'build_ext']):
-        debug = bool(get_distutils_build_option('debug'))
-    else:
-        debug = bool(current_debug)
-
-    if current_debug is not None and current_debug != debug:
-        build_ext_cmd = dist.get_command_class('build_ext')
-        build_ext_cmd._force_rebuild = True
-
-    return debug
-
-
 def add_exclude_packages(excludes):
 
     if _module_state['excludes_too_late']:
@@ -151,235 +74,6 @@ def add_exclude_packages(excludes):
             "functions in order to properly handle excluded packages")
 
     _module_state['exclude_packages'].update(set(excludes))
-
-
-def register_commands(package=None, version=None, release=None, srcdir='.'):
-    """
-    This function generates a dictionary containing customized commands that
-    can then be passed to the ``cmdclass`` argument in ``setup()``.
-    """
-
-    if package is not None:
-        warnings.warn('The package argument to generate_version_py has '
-                      'been deprecated and will be removed in future. Specify '
-                      'the package name in setup.cfg instead', AstropyDeprecationWarning)
-
-    if version is not None:
-        warnings.warn('The version argument to generate_version_py has '
-                      'been deprecated and will be removed in future. Specify '
-                      'the version number in setup.cfg instead', AstropyDeprecationWarning)
-
-    if release is not None:
-        warnings.warn('The release argument to generate_version_py has '
-                      'been deprecated and will be removed in future. We now '
-                      'use the presence of the "dev" string in the version to '
-                      'determine whether this is a release', AstropyDeprecationWarning)
-
-    # We use ConfigParser instead of read_configuration here because the latter
-    # only reads in keys recognized by setuptools, but we need to access
-    # package_name below.
-    conf = ConfigParser()
-    conf.read('setup.cfg')
-
-    if conf.has_option('metadata', 'name'):
-        package = conf.get('metadata', 'name')
-    elif conf.has_option('metadata', 'package_name'):
-        # The package-template used package_name instead of name for a while
-        warnings.warn('Specifying the package name using the "package_name" '
-                      'option in setup.cfg is deprecated - use the "name" '
-                      'option instead.', AstropyDeprecationWarning)
-        package = conf.get('metadata', 'package_name')
-    elif package is not None:  # deprecated
-        pass
-    else:
-        sys.stderr.write('ERROR: Could not read package name from setup.cfg\n')
-        sys.exit(1)
-
-    if conf.has_option('metadata', 'version'):
-        version = conf.get('metadata', 'version')
-    elif version is not None:  # deprecated
-        pass
-    else:
-        sys.stderr.write('ERROR: Could not read package version from setup.cfg\n')
-        sys.exit(1)
-
-    release = 'dev' not in version
-
-    if _module_state['registered_commands'] is not None:
-        return _module_state['registered_commands']
-
-    if _module_state['have_sphinx']:
-        try:
-            from .commands.build_sphinx import (AstropyBuildSphinx,
-                                                AstropyBuildDocs)
-        except ImportError:
-            AstropyBuildSphinx = AstropyBuildDocs = FakeBuildSphinx
-    else:
-        AstropyBuildSphinx = AstropyBuildDocs = FakeBuildSphinx
-
-    _module_state['registered_commands'] = registered_commands = {
-        'test': generate_test_command(package),
-
-        # Use distutils' sdist because it respects package_data.
-        # setuptools/distributes sdist requires duplication of information in
-        # MANIFEST.in
-        'sdist': DistutilsSdist,
-
-        # The exact form of the build_ext command depends on whether or not
-        # we're building a release version
-        'build_ext': AstropyHelpersBuildExt,
-
-        'build_sphinx': AstropyBuildSphinx,
-        'build_docs': AstropyBuildDocs
-    }
-
-    # Need to override the __name__ here so that the commandline options are
-    # presented as being related to the "build" command, for example; normally
-    # this wouldn't be necessary since commands also have a command_name
-    # attribute, but there is a bug in distutils' help display code that it
-    # uses __name__ instead of command_name. Yay distutils!
-    for name, cls in registered_commands.items():
-        cls.__name__ = name
-
-    # Add a few custom options; more of these can be added by specific packages
-    # later
-    for option in [
-            ('use-system-libraries',
-             "Use system libraries whenever possible", True)]:
-        add_command_option('build', *option)
-        add_command_option('install', *option)
-
-    add_command_hooks(registered_commands, srcdir=srcdir)
-
-    return registered_commands
-
-
-def add_command_hooks(commands, srcdir='.'):
-    """
-    Look through setup_package.py modules for functions with names like
-    ``pre_<command_name>_hook`` and ``post_<command_name>_hook`` where
-    ``<command_name>`` is the name of a ``setup.py`` command (e.g. build_ext).
-
-    If either hook is present this adds a wrapped version of that command to
-    the passed in ``commands`` `dict`.  ``commands`` may be pre-populated with
-    other custom distutils command classes that should be wrapped if there are
-    hooks for them (e.g. `AstropyBuildPy`).
-    """
-
-    hook_re = re.compile(r'^(pre|post)_(.+)_hook$')
-
-    # Distutils commands have a method of the same name, but it is not a
-    # *classmethod* (which probably didn't exist when distutils was first
-    # written)
-    def get_command_name(cmdcls):
-        if hasattr(cmdcls, 'command_name'):
-            return cmdcls.command_name
-        else:
-            return cmdcls.__name__
-
-    packages = find_packages(srcdir)
-    dist = get_dummy_distribution()
-
-    hooks = collections.defaultdict(dict)
-
-    for setuppkg in iter_setup_packages(srcdir, packages):
-        for name, obj in vars(setuppkg).items():
-            match = hook_re.match(name)
-            if not match:
-                continue
-
-            hook_type = match.group(1)
-            cmd_name = match.group(2)
-
-            if hook_type not in hooks[cmd_name]:
-                hooks[cmd_name][hook_type] = []
-
-            hooks[cmd_name][hook_type].append((setuppkg.__name__, obj))
-
-    for cmd_name, cmd_hooks in hooks.items():
-        commands[cmd_name] = generate_hooked_command(
-            cmd_name, dist.get_command_class(cmd_name), cmd_hooks)
-
-
-def generate_hooked_command(cmd_name, cmd_cls, hooks):
-    """
-    Returns a generated subclass of ``cmd_cls`` that runs the pre- and
-    post-command hooks for that command before and after the ``cmd_cls.run``
-    method.
-    """
-
-    def run(self, orig_run=cmd_cls.run):
-        self.run_command_hooks('pre_hooks')
-        orig_run(self)
-        self.run_command_hooks('post_hooks')
-
-    return type(cmd_name, (cmd_cls, object),
-                {'run': run, 'run_command_hooks': run_command_hooks,
-                 'pre_hooks': hooks.get('pre', []),
-                 'post_hooks': hooks.get('post', [])})
-
-
-def run_command_hooks(cmd_obj, hook_kind):
-    """Run hooks registered for that command and phase.
-
-    *cmd_obj* is a finalized command object; *hook_kind* is either
-    'pre_hook' or 'post_hook'.
-    """
-
-    hooks = getattr(cmd_obj, hook_kind, None)
-
-    if not hooks:
-        return
-
-    for modname, hook in hooks:
-        if isinstance(hook, str):
-            try:
-                hook_obj = resolve_name(hook)
-            except ImportError as exc:
-                raise DistutilsModuleError(
-                    'cannot find hook {0}: {1}'.format(hook, exc))
-        else:
-            hook_obj = hook
-
-        if not callable(hook_obj):
-            raise DistutilsOptionError('hook {0!r} is not callable' % hook)
-
-        log.info('running {0} from {1} for {2} command'.format(
-                 hook_kind.rstrip('s'), modname, cmd_obj.get_command_name()))
-
-        try:
-            hook_obj(cmd_obj)
-        except Exception:
-            log.error('{0} command hook {1} raised an exception: %s\n'.format(
-                hook_obj.__name__, cmd_obj.get_command_name()))
-            log.error(traceback.format_exc())
-            sys.exit(1)
-
-
-def generate_test_command(package_name):
-    """
-    Creates a custom 'test' command for the given package which sets the
-    command's ``package_name`` class attribute to the name of the package being
-    tested.
-    """
-
-    return type(package_name.title() + 'Test', (AstropyTest,),
-                {'package_name': package_name})
-
-
-def update_package_files(srcdir, extensions, package_data, packagenames,
-                         package_dirs):
-    """
-    This function is deprecated and maintained for backward compatibility
-    with affiliated packages.  Affiliated packages should update their
-    setup.py to use `get_package_info` instead.
-    """
-
-    info = get_package_info(srcdir)
-    extensions.extend(info['ext_modules'])
-    package_data.update(info['package_data'])
-    packagenames = list(set(packagenames + info['packages']))
-    package_dirs.update(info['package_dir'])
 
 
 def get_package_info(srcdir='.', exclude=()):
@@ -485,6 +179,15 @@ def get_package_info(srcdir='.', exclude=()):
     if get_compiler_option() == 'msvc':
         for ext in ext_modules:
             ext.extra_link_args.append('/MANIFEST')
+
+    if len(ext_modules) > 0:
+        main_package_dir = min(packages, key=len)
+        src_path = os.path.relpath(os.path.join(os.path.dirname(__file__), 'src'))
+        shutil.copy(os.path.join(src_path, 'compiler.c'),
+                    os.path.join(srcdir, main_package_dir, '_compiler.c'))
+        ext = Extension(main_package_dir + '.compiler_version',
+                        [os.path.join(main_package_dir, '_compiler.c')])
+        ext_modules.append(ext)
 
     return {
         'ext_modules': ext_modules,
@@ -760,39 +463,3 @@ def find_packages(where='.', exclude=(), invalidate_cache=False):
     _module_state['package_cache'] = packages
 
     return packages
-
-
-class FakeBuildSphinx(Command):
-    """
-    A dummy build_sphinx command that is called if Sphinx is not
-    installed and displays a relevant error message
-    """
-
-    # user options inherited from sphinx.setup_command.BuildDoc
-    user_options = [
-        ('fresh-env', 'E', ''),
-        ('all-files', 'a', ''),
-        ('source-dir=', 's', ''),
-        ('build-dir=', None, ''),
-        ('config-dir=', 'c', ''),
-        ('builder=', 'b', ''),
-        ('project=', None, ''),
-        ('version=', None, ''),
-        ('release=', None, ''),
-        ('today=', None, ''),
-        ('link-index', 'i', '')]
-
-    # user options appended in astropy.setup_helpers.AstropyBuildSphinx
-    user_options.append(('warnings-returncode', 'w', ''))
-    user_options.append(('clean-docs', 'l', ''))
-    user_options.append(('no-intersphinx', 'n', ''))
-    user_options.append(('open-docs-in-browser', 'o', ''))
-
-    def initialize_options(self):
-        try:
-            raise RuntimeError("Sphinx and its dependencies must be installed "
-                               "for build_docs.")
-        except:
-            log.error('error: Sphinx and its dependencies must be installed '
-                      'for build_docs.')
-            sys.exit(1)

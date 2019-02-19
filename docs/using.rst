@@ -15,12 +15,12 @@ However, we now go through the steps of adding astropy-helpers
 as a submodule to a package in case you wish to do so manually. First, add
 astropy-helpers as a submodule at the root of your repository::
 
-    git submodule add git://github.com/astropy/astropy-helpers astropy_helpers
+    git submodule add git://github.com/astropy/astropy-helpers extension_helpers
 
 Then go inside the submodule and check out a stable version of astropy-helpers.
 You can see the available versions by running::
 
-    $ cd astropy_helpers
+    $ cd extension_helpers
     $ git tag
     ...
     v2.0.6
@@ -39,15 +39,15 @@ Then go back up to the root of your repository and copy the ``ah_bootstrap.py``
 file from the submodule to the root of your repository::
 
     $ cd ..
-    $ cp astropy_helpers/ah_bootstrap.py .
+    $ cp extension_helpers/ah_bootstrap.py .
 
 Finally, add::
 
     import ah_bootstrap
 
-at the top of your ``setup.py`` file. This will ensure that ``astropy_helpers``
+at the top of your ``setup.py`` file. This will ensure that ``extension_helpers``
 is now available to use in your ``setup.py`` file. Finally, add then commit your
 changes::
 
-    git add astropy_helpers ah_bootstrap.py setup.py
+    git add extension_helpers ah_bootstrap.py setup.py
     git commit -m "Added astropy-helpers"

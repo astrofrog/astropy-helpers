@@ -6,7 +6,7 @@ from importlib import machinery
 from distutils.core import Extension
 
 from ..openmp_helpers import add_openmp_flags_if_available, generate_openmp_enabled_py
-from ..setup_helpers import _module_state, register_commands
+from ..setup_helpers import _module_state
 
 IS_TRAVIS_LINUX = os.environ.get('TRAVIS_OS_NAME', None) == 'linux'
 IS_TRAVIS_OSX = os.environ.get('TRAVIS_OS_NAME', None) == 'osx'
@@ -36,8 +36,6 @@ def teardown_function(function):
 
 def test_add_openmp_flags_if_available():
 
-    register_commands('openmp_testing', '0.0', False)
-
     using_openmp = add_openmp_flags_if_available(Extension('test', []))
 
     # Make sure that on Travis (Linux) and AppVeyor OpenMP does get used (for
@@ -51,8 +49,6 @@ def test_add_openmp_flags_if_available():
 
 
 def test_generate_openmp_enabled_py():
-
-    register_commands('openmp_autogeneration_testing', '0.0', False)
 
     # Test file generation
     generate_openmp_enabled_py('')

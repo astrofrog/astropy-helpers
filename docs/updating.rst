@@ -13,7 +13,7 @@ Manual update
 
 To instead update astropy-helpers manually, go inside the submodule and do::
 
-    cd astropy_helpers
+    cd extension_helpers
     git fetch origin
 
 Then checkout the version you want to use, e.g.::
@@ -23,6 +23,6 @@ Then checkout the version you want to use, e.g.::
 Go back up to the root of the repository and update the ``ah_bootstap.py`` file
 too, then add your changes::
 
-    cp astropy_helpers/ah_bootstrap.py .
-    git add astropy_helpers ah_bootstrap.py
+    cp extension_helpers/ah_bootstrap.py .
+    git add extension_helpers ah_bootstrap.py
     git commit ...
